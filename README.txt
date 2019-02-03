@@ -1,1 +1,1 @@
-Linkedin Test Automation Project using Selenium and Pyhton
+Linkedin Test Automation Project using Selenium and Python
