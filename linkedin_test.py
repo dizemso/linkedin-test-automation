@@ -22,7 +22,7 @@ class LinkedinTestAutomation:
                 os.unlink(file.path)
         self.driver = webdriver.Chrome()
 
-    def test_init(self):
+    def test_setup(self):
         logging.info('Test Automation for Linkedin is started')
         # window Maximize
         self.driver.maximize_window()
@@ -34,7 +34,7 @@ class LinkedinTestAutomation:
         # for waiting
         self.driver.implicitly_wait(10)
 
-    def test_screenshot(self, testcase_name):
+    def take_screenshot(self, testcase_name):
         destination_folder_name = "log/"
         file_name = str(testcase_name) + ".png"
         destination_file = destination_folder_name + file_name
@@ -43,7 +43,7 @@ class LinkedinTestAutomation:
             total_width = self.driver.execute_script("return document.body.offsetWidth")
             total_height = self.driver.execute_script("return document.body.scrollHeight")
             self.driver.set_window_size(total_width, total_height)
-            screenshot = self.driver.save_screenshot(destination_file)
+            self.driver.save_screenshot(destination_file)
             logging.info("Screenshot saved to directory --> :: " + destination_file)
         except NotADirectoryError:
             logging.warning("Not a directory issue")
@@ -62,14 +62,15 @@ class LinkedinTestAutomation:
             login_link.click()
             time.sleep(4)
             logging.debug("The current Url: " + self.driver.current_url)
+            # if login is successful, it should navigate to Home page
             if "feed" in self.driver.current_url:
                 logging.info("Login test successful")
             else:
-                raise Exception("Login test failed")
-        except:
-            logging.error("Login test failed")
-            test_object.test_screenshot("test_login")
-            test_object.test_exit()
+                raise Exception("Home page not found")
+        except Exception as e:
+            logging.error("Login test failed: " + str(e))
+            test_object.take_screenshot("test_login")
+            test_object.test_teardown()
 
     def test_notification(self):
         logging.info("Notification test started")
@@ -81,12 +82,12 @@ class LinkedinTestAutomation:
             if "notification" in self.driver.current_url:
                 logging.info("Notification test successful")
             else:
-                raise Exception("Notification test failed")
+                raise Exception("Notification url is not as expected")
 
             time.sleep(4)
-        except:
-            logging.error("Notification test failed")
-            test_object.test_screenshot("test_notification")
+        except Exception as e:
+            logging.error("Notification test failed: " + str(e))
+            test_object.take_screenshot("test_notification")
 
     def test_profile(self):
         logging.info("Profile test started")
@@ -97,16 +98,15 @@ class LinkedinTestAutomation:
             view_profile = self.driver.find_element_by_css_selector('.artdeco-button--fluid')
             view_profile.click()
             time.sleep(2)
-            print('url link ' + self.driver.current_url)
+            # print('url link ' + self.driver.current_url)
             if "linked-in-test-automation" in self.driver.current_url:
                 logging.info("Profile test successful")
             else:
-                raise Exception("Profile test failed")
+                raise Exception("Profile url is not as expected")
             time.sleep(2)
-        except:
-            print('profile click error')
-            logging.error("Profile test failed")
-            test_object.test_screenshot("test_profile")
+        except Exception as e:
+            logging.error("Profile test failed: " + str(e))
+            test_object.take_screenshot("test_profile")
 
     # def test_add_skills(self):
     #     add_profile_field = self.driver.find_element_by_tag_name('data-control-name="profile_edit_fab"')
@@ -117,6 +117,7 @@ class LinkedinTestAutomation:
     #     skills_panel.click()
     #
     #     time.sleep(5)
+
     def test_mynetwork(self):
         logging.info("My Network test started")
         try:
@@ -126,11 +127,11 @@ class LinkedinTestAutomation:
             if "mynetwork" in self.driver.current_url:
                 logging.info("My Network test successful")
             else:
-                raise Exception("My Network test failed")
+                raise Exception("My Network url is not as expected")
             time.sleep(5)
-        except:
-            logging.error("My Network test failed")
-            test_object.test_screenshot("test_mynetwork")
+        except Exception as e:
+            logging.error("My Network test failed: " + str(e))
+            test_object.take_screenshot("test_mynetwork")
 
     def test_home(self):
         logging.info("Home test started")
@@ -141,11 +142,11 @@ class LinkedinTestAutomation:
             if "feed" in self.driver.current_url:
                 logging.info("Home test successful")
             else:
-                raise Exception("Home test failed")
+                raise Exception("Home url is not as expected")
             time.sleep(7)
-        except:
-            logging.error("Home test failed")
-            test_object.test_screenshot("test_home")
+        except Exception as e:
+            logging.error("Home test failed: " + str(e))
+            test_object.take_screenshot("test_home")
 
     def test_messages(self):
         logging.info("Messages test started")
@@ -158,11 +159,11 @@ class LinkedinTestAutomation:
             if "messaging" in self.driver.current_url:
                 logging.info("Messages test successful")
             else:
-                raise Exception("Messages test failed")
+                raise Exception("Messages url is not as expected")
             time.sleep(4)
-        except:
-            logging.error("Messages test failed")
-            test_object.test_screenshot("test_messages")
+        except Exception as e:
+            logging.error("Messages test failed : " + str(e))
+            test_object.take_screenshot("test_messages")
 
     def test_search_jobs(self):
         logging.info("Search Job test started")
@@ -170,19 +171,26 @@ class LinkedinTestAutomation:
             job_field = self.driver.find_element_by_xpath('//*[@id="jobs-tab-icon"]')
             job_field.click()
             time.sleep(4)
+            if "jobs" not in self.driver.current_url:
+                raise Exception("Search Job url is not as expected")
             search_field = self.driver.find_element_by_xpath('//input[contains(@id,"ember") and contains(@placeholder,"Search jobs")]')
             time.sleep(4)
             search_field.send_keys('Test Engineer')
             time.sleep(4)
-            search_field.clear()
-            if "job" in self.driver.current_url:
+            location_field = self.driver.find_element_by_xpath('//input[contains(@id,"jobs-search-box-location-id")and contains(@placeholder,"Search location")]')
+            location_field.send_keys('Belgium')
+            time.sleep(2)
+            click_button = self.driver.find_element_by_xpath('//button[contains(@class,"jobs-search-box__submit-button button-secondary-large")]')
+            click_button.click()
+            time.sleep(4)
+            if "keywords=Test%20Engineer&location=Belgium" in self.driver.current_url:
                 logging.info("Search Job test successful")
             else:
-                raise Exception("Search Job test failed")
+                raise Exception("Search Job url for Test Engineer in Belgium is not as expected")
             time.sleep(3)
-        except:
-            logging.error("Search Job test failed")
-            test_object.test_screenshot("test_search_jobs")
+        except Exception as e:
+            logging.error("Search Job test failed: " + str(e))
+            test_object.take_screenshot("test_search_jobs")
 
     def test_sign_out(self):
         logging.info("Sign out test started")
@@ -196,20 +204,20 @@ class LinkedinTestAutomation:
             if "https://www.linkedin.com/" == self.driver.current_url:
                 logging.info("Sign out test successful")
             else:
-                raise Exception("Sign out test failed")
+                raise Exception("Sign out url is not as expected")
             time.sleep(5)
-        except:
-            logging.error("Sign out test failed")
-            test_object.test_screenshot("test_sign_out")
+        except Exception as e:
+            logging.error("Sign out test failed: " + str(e))
+            test_object.take_screenshot("test_sign_out")
 
-    def test_exit(self):
+    def test_teardown(self):
         logging.info("Exit test started")
         try:
             logging.info('Test Automation for Linkedin is finished')
             self.driver.quit()
-        except:
-            logging.error("Exit test failed")
-            test_object.test_screenshot("test_exit")
+        except Exception as e:
+            logging.error("Test exit failed: " + str(e))
+            test_object.take_screenshot("test_exit")
 
         logging.info('Sending e-mail to recipients')
         log_dir = 'log'
@@ -221,7 +229,7 @@ class LinkedinTestAutomation:
 logging.basicConfig(filename='log/selenium_log.log', filemode='w', level=logging.INFO)
 logging.getLogger().addHandler(logging.StreamHandler())
 test_object = LinkedinTestAutomation()
-test_object.test_init()
+test_object.test_setup()
 test_object.test_login()
 test_object.test_notification()
 test_object.test_profile()
@@ -231,5 +239,5 @@ test_object.test_messages()
 test_object.test_search_jobs()
 #test_object.test_add_skills()
 test_object.test_sign_out()
-test_object.test_exit()
+test_object.test_teardown()
 
